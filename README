@@ -1,0 +1,6 @@
+A Pong bootstrap demo made for BeMyApp 09-24-2012 event
+
+Highlighted features : 
+- Using libgdx
+- Using screen space to world space in order to make a 2d game using 3d models.
+- Using Box2D in a 3D game
