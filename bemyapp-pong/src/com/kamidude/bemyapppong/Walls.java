@@ -1,6 +1,7 @@
 package com.kamidude.bemyapppong;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
@@ -22,7 +23,9 @@ public class Walls implements Disposable {
 	private static final float HALF_WALL_HEIGHT = 1f;
 	
 	public Walls() {
-		mWallShader = new ShaderProgram(Gdx.files.internal("data/wall.vs"), Gdx.files.internal("data/wall.fs"));
+		FileHandle vs = Gdx.files.internal("data/wall.vs");
+		FileHandle fs = Gdx.files.internal("data/wall.fs");
+		mWallShader = new ShaderProgram(vs, fs);
 		if(!mWallShader.isCompiled()) {
 			throw new RuntimeException(mWallShader.getLog());
 		}
