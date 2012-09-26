@@ -3,9 +3,10 @@ package com.kamidude.bemyapppong;
 import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g3d.loaders.obj.ObjLoader;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
@@ -25,6 +26,7 @@ public class Balls implements Disposable {
 	
 	private ShaderProgram mShader;
 	private Mesh mMesh;
+	private Texture mTexture;
 	private World mWorld;
 	private MouseJoint mMouseJoint;
 	private Actor mCurrentActor;
@@ -74,8 +76,7 @@ public class Balls implements Disposable {
 			mRef.destroyActor(this);
 		}
 		
-		private static final float MIN_SPEED = 0.3f;
-		private static final float ACCELERATION = 0.01f;
+		private static final float MIN_SPEED = 3.3f;
 		public void update(ILevel level, float delta) {
 			float rotSpeed1 = 140;
 			float rotSpeed2 = 75;
@@ -111,8 +112,11 @@ public class Balls implements Disposable {
 			throw new RuntimeException(mShader.getLog());
 		}
 		
+		mTexture = new Texture(Gdx.files.internal("data/metal1024.png"), true);
+		mTexture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.MipMapLinearNearest);
+		
 		// load mesh
-		mMesh = ObjLoader.loadObj(Gdx.files.internal("data/cube.obj").read(), false, true);
+		mMesh = ObjLoader.loadObj(Gdx.files.internal("data/cube.obj").read(), true, false);
 		mWorld = world;
 	}
 	
@@ -128,7 +132,7 @@ public class Balls implements Disposable {
 	}
 	
 	public void update(ILevel screen, float delta) {
-		if(Gdx.input.isButtonPressed(Buttons.LEFT)) {
+		if(Gdx.input.justTouched()) {
 			if(mMouseJoint == null && mCurrentActor != null && !mJointCreatedForCurrentActor) {
 				if(mListener != null)
 					mListener.isPlayerControllingBall(true);
@@ -143,9 +147,11 @@ public class Balls implements Disposable {
 				mMouseJoint = (MouseJoint) mWorld.createJoint(def);
 				mJointCreatedForCurrentActor = true;
 			}
+		} else if(Gdx.input.isTouched()) {
 			if(mMouseJoint != null)
 				mMouseJoint.setTarget(screen.screenToWorld(Gdx.input.getX(), Gdx.input.getY()));
-		} else {
+		} 
+		else {
 			if(mMouseJoint != null) {
 				mWorld.destroyJoint(mMouseJoint);
 				mMouseJoint = null;
@@ -168,6 +174,10 @@ public class Balls implements Disposable {
 		mShader.setUniformMatrix("u_view", level.getCamera().view);
 		mShader.setUniformMatrix("u_proj", level.getCamera().projection);
 		mShader.setUniformf("u_lightDir", level.getLightDir());
+		mShader.setUniformi("u_tex", 0);
+		
+		mTexture.bind(0);
+		
 		
 		for(int i = 0; i < mActors.size(); ++i) {
 			Actor actor = mActors.get(i);
@@ -221,5 +231,6 @@ public class Balls implements Disposable {
 		mMesh.dispose();
 		mShader.dispose();
 		mActors.clear();
+		mTexture.dispose();
 	}
 }

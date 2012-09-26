@@ -1,13 +1,14 @@
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 
-uniform vec3 u_lightDir;
 uniform sampler2D u_tex;
 
-varying vec4 v_normal;
+varying float v_nDotL;
+varying vec2 v_texCoord0;
 
 void main() {
-    float nDotL = dot(v_normal.xyz, u_lightDir);
-    gl_FragColor = vec4(nDotL,nDotL,nDotL, 1.0);
+    vec4 color = texture2D(u_tex, v_texCoord0);
+    color += vec4(0.1, 0.1, 0.1, 1);
+    gl_FragColor = vec4(color.rgb * v_nDotL, 1.0);
 }

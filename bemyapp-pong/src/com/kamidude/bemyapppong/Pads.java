@@ -3,15 +3,19 @@ package com.kamidude.bemyapppong;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
+import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.g3d.loaders.obj.ObjLoader;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.utils.Disposable;
 
 public class Pads implements Disposable {
@@ -25,6 +29,8 @@ public class Pads implements Disposable {
 	private Body mPadBottom;
 	private Matrix4 mPadBottomTransform;
 	
+	private Texture mTexture;
+	
 	private boolean mControlAllowed = true;
 	
 	public Pads(World world, float topLane, float bottomLane) {
@@ -37,7 +43,11 @@ public class Pads implements Disposable {
 		}
 		
 		// load mesh
-		mMesh = ObjLoader.loadObj(Gdx.files.internal("data/pad.obj").read(), false, true);
+		mMesh = ObjLoader.loadObj(Gdx.files.internal("data/pad.obj").read(), true, false);
+		
+		mTexture = new Texture(Gdx.files.internal("data/metal3_1024.png"), true);
+		mTexture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.MipMapLinearNearest);
+		mTexture.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 		
 		// prepare physics
 		mWorld = world;
@@ -45,8 +55,8 @@ public class Pads implements Disposable {
 		mPadBottom = makePadBody(0.0f, bottomLane);
 		
 		// allocate matrices
-		mPadTopTransform = new Matrix4().rotate(0, 1, 0, 180);
-		mPadBottomTransform = new Matrix4();
+		mPadTopTransform = new Matrix4();
+		mPadBottomTransform = new Matrix4().rotate(0, 0, 1, 180);
 	}
 	
 	private Body makePadBody(float x, float y) {
@@ -103,11 +113,18 @@ public class Pads implements Disposable {
 		mShader.setUniformMatrix("u_view", level.getCamera().view);
 		mShader.setUniformMatrix("u_proj", level.getCamera().projection);
 		mShader.setUniformf("u_lightDir", level.getLightDir());
+		mShader.setUniformi("u_tex", 0);
+		Vector3 ballPos = level.getBallPosition();
+		mShader.setUniformf("u_pointLightPos", ballPos);
 		
+		mTexture.bind(0);
+		
+		mShader.setUniformf("u_pointLightCol", new Vector3(0.1f,0.1f,0.7f));
 		mShader.setUniformMatrix("u_normalMat", level.getNormalMatrix(mPadTopTransform));
 		mShader.setUniformMatrix("u_world", mPadTopTransform);
 		mMesh.render(mShader, GL20.GL_TRIANGLES);
 		
+		mShader.setUniformf("u_pointLightCol", new Vector3(0.7f,0.1f,0.1f));
 		mShader.setUniformMatrix("u_normalMat", level.getNormalMatrix(mPadBottomTransform));
 		mShader.setUniformMatrix("u_world", mPadBottomTransform);
 		mMesh.render(mShader, GL20.GL_TRIANGLES);
@@ -127,6 +144,7 @@ public class Pads implements Disposable {
 	public void dispose() {
 		mMesh.dispose();
 		mShader.dispose();
+		mTexture.dispose();
 		
 		if(mPadTop != null) {
 			mWorld.destroyBody(mPadTop);

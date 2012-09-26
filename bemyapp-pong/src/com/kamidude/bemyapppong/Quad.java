@@ -21,12 +21,12 @@ public class Quad implements Disposable {
 		normalFace2.crs(new Vector3(fourthPoint).sub(secondPoint)).nor();
 		
 		mMesh.setVertices(new float[] {
-			firstPoint.x, firstPoint.y, firstPoint.z,		normalFace1.x, normalFace1.y, normalFace1.z,	0.0f, 1.0f,
-			secondPoint.x, secondPoint.y, secondPoint.z,	normalFace1.x, normalFace1.y, normalFace1.z,	0.0f, 0.0f,
-			thirdPoint.x, thirdPoint.y, thirdPoint.z, 		normalFace1.x, normalFace1.y, normalFace1.z,	1.0f, 0.0f,
-			secondPoint.x, secondPoint.y, secondPoint.z, 	normalFace2.x, normalFace2.y, normalFace2.z,	0.0f, 0.0f,
-			thirdPoint.x, thirdPoint.y, thirdPoint.z, 		normalFace2.x, normalFace2.y, normalFace2.z,	1.0f, 0.0f,
-			fourthPoint.x, fourthPoint.y, fourthPoint.z, 	normalFace2.x, normalFace2.y, normalFace2.z,	1.0f, 1.0f
+			firstPoint.x, firstPoint.y, firstPoint.z,		normalFace1.x, normalFace1.y, normalFace1.z,	0, 0,
+			secondPoint.x, secondPoint.y, secondPoint.z,	normalFace1.x, normalFace1.y, normalFace1.z,	0, 1,
+			thirdPoint.x, thirdPoint.y, thirdPoint.z, 		normalFace1.x, normalFace1.y, normalFace1.z,	1, 0,
+			secondPoint.x, secondPoint.y, secondPoint.z, 	normalFace2.x, normalFace2.y, normalFace2.z,	0, 1,
+			thirdPoint.x, thirdPoint.y, thirdPoint.z, 		normalFace2.x, normalFace2.y, normalFace2.z,	1, 0,
+			fourthPoint.x, fourthPoint.y, fourthPoint.z, 	normalFace2.x, normalFace2.y, normalFace2.z,	1, 1
 		});
 	}
 	

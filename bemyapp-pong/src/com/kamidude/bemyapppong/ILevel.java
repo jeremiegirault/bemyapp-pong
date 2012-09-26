@@ -18,4 +18,6 @@ public interface ILevel {
 	public Camera getCamera();
 	public Vector3 getLightDir();
 	public Matrix4 getNormalMatrix(Matrix4 worldTransform);
+	
+	public Vector3 getBallPosition();
 }

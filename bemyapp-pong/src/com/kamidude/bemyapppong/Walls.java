@@ -3,6 +3,9 @@ package com.kamidude.bemyapppong;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
+import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
@@ -19,7 +22,7 @@ public class Walls implements Disposable {
 	private Body mLeftWallBody;
 	private Quad mRightWall;
 	private Body mRightWallBody;
-	
+	private Texture mTexture;
 	private static final Matrix4 IDENTITY = new Matrix4();
 	private static final float HALF_WALL_HEIGHT = 1f;
 	
@@ -27,6 +30,10 @@ public class Walls implements Disposable {
 		FileHandle vs = Gdx.files.internal("data/wall.vs");
 		FileHandle fs = Gdx.files.internal("data/wall.fs");
 		mWallShader = new ShaderProgram(vs, fs);
+		
+		mTexture = new Texture(Gdx.files.internal("data/metal2_1024.png"), true);
+		mTexture.setFilter(TextureFilter.MipMapLinearNearest, TextureFilter.MipMapLinearNearest);
+		mTexture.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 		if(!mWallShader.isCompiled()) {
 			throw new RuntimeException(mWallShader.getLog());
 		}
@@ -40,6 +47,11 @@ public class Walls implements Disposable {
 		mWallShader.setUniformMatrix("u_proj", level.getCamera().projection);
 		mWallShader.setUniformf("u_halfWallHeight", HALF_WALL_HEIGHT);
 		mWallShader.setUniformf("u_lightDir", level.getLightDir());
+		mWallShader.setUniformi("u_tex", 0);
+		Vector3 ballPos = level.getBallPosition();
+		mWallShader.setUniformf("u_pointLightPos", ballPos);
+		
+		mTexture.bind(0);
 		
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -70,8 +82,8 @@ public class Walls implements Disposable {
 				new Vector3(topLeft.x-inclination, topLeft.y, HALF_WALL_HEIGHT), new Vector3(bottomLeft.x-inclination, bottomLeft.y, HALF_WALL_HEIGHT)
 				);
 		mRightWall = new Quad(
-				new Vector3(topRight.x-inclination, topRight.y, -HALF_WALL_HEIGHT), new Vector3(topRight.x+inclination, topRight.y, HALF_WALL_HEIGHT),
-				new Vector3(bottomRight.x-inclination, bottomRight.y, -HALF_WALL_HEIGHT), new Vector3(bottomRight.x+inclination, bottomRight.y, HALF_WALL_HEIGHT)
+				new Vector3(topRight.x-inclination, topRight.y, -HALF_WALL_HEIGHT), new Vector3(bottomRight.x-inclination, bottomRight.y, -HALF_WALL_HEIGHT),
+				new Vector3(topRight.x+inclination, topRight.y, HALF_WALL_HEIGHT), new Vector3(bottomRight.x+inclination, bottomRight.y, HALF_WALL_HEIGHT)
 				);
 	}
 	
@@ -105,5 +117,7 @@ public class Walls implements Disposable {
 		
 		mLeftWall.dispose();
 		mRightWall.dispose();
+		
+		mTexture.dispose();
 	}
 }

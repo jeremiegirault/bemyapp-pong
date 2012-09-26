@@ -5,6 +5,7 @@ import java.util.Random;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -87,6 +88,13 @@ public final class Pong implements Screen, ILevel {
 	//
 	
 	@Override
+	public Vector3 getBallPosition() {
+		Vector2 pos = mMagnets.getCurrentActor().getBody().getPosition();
+		//Vector2 worldPos = screenToWorld(pos.x, pos.y);
+		return new Vector3(pos.x, pos.y, 0.0f);
+	}
+	
+	@Override
 	public void render(float delta) {
 		mWorld.step(1/60f, 8, 3);
 		
@@ -100,7 +108,6 @@ public final class Pong implements Screen, ILevel {
 		mLightDir.nor();
 		
 		// update actors
-		
 		mMagnets.update(this, delta);
 		Balls.Actor currentMagnet = mMagnets.getCurrentActor();
 		if(currentMagnet != null) {
@@ -129,11 +136,13 @@ public final class Pong implements Screen, ILevel {
 		mPads.render(this);
 		
 		mFontSprite.begin();
+		mFont.setColor(Color.BLUE);
 		mFont.draw(mFontSprite, String.valueOf(mTopPlayerScore), 25, Gdx.graphics.getHeight()-5);
+		mFont.setColor(Color.RED);
 		mFont.draw(mFontSprite, String.valueOf(mBottomPlayerScore), 25, 20);
 		mFontSprite.end();
 		
-		mDebugRenderer.render(mWorld, mCamera.combined);
+		//mDebugRenderer.render(mWorld, mCamera.combined);
 	}
 
 	@Override
@@ -215,8 +224,10 @@ public final class Pong implements Screen, ILevel {
 
 	@Override
 	public Matrix4 getNormalMatrix(Matrix4 worldTm) {
+		
 		mNormalMatrix.set(mCamera.view);
 		mNormalMatrix.mul(worldTm);
+		
 		return mNormalMatrix.toNormalMatrix();
 	}
 	
