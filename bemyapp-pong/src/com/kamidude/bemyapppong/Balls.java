@@ -26,11 +26,17 @@ public class Balls implements Disposable {
 	private ShaderProgram mShader;
 	private Mesh mMesh;
 	private World mWorld;
-	
 	private MouseJoint mMouseJoint;
 	private Actor mCurrentActor;
 	
+	private boolean mJointCreatedForCurrentActor = false;
+	
 	private ArrayList<Actor> mActors = new ArrayList<Balls.Actor>();
+	
+	private BallControlListener mListener;
+	public static interface BallControlListener {
+		public void isPlayerControllingBall(boolean controlling);
+	}
 	
 	public static class Actor {
 		private Balls mRef;
@@ -51,7 +57,7 @@ public class Balls implements Disposable {
 	        mBody = world.createBody(playerBodyDef);
 	        CircleShape playerShape = new CircleShape();
 	        playerShape.setRadius(0.7f);
-	        FixtureDef playerFixture = new FixtureDef();  
+	        FixtureDef playerFixture = new FixtureDef();
 	        playerFixture.shape = playerShape;  
 	        playerFixture.density = 1.0f;  
 	        playerFixture.friction = 0.0f;  
@@ -68,10 +74,23 @@ public class Balls implements Disposable {
 			mRef.destroyActor(this);
 		}
 		
-		public void update(float delta) {
+		private static final float MIN_SPEED = 0.3f;
+		private static final float ACCELERATION = 0.01f;
+		public void update(ILevel level, float delta) {
 			float rotSpeed1 = 140;
 			float rotSpeed2 = 75;
 			float rotSpeed3 = 32;
+			
+			if(mRef.mJointCreatedForCurrentActor) {
+				// if we launched the ball
+				
+				Vector2 velocity = mBody.getLinearVelocity();
+				if(velocity.len() < MIN_SPEED) {
+					velocity.set(level.getRandom().nextFloat(), level.getRandom().nextFloat()).nor().mul(MIN_SPEED*20);
+					mBody.applyForceToCenter(velocity);
+				}
+			}
+			
 			
 			Vector2 playerPos = mBody.getPosition();
 			mTransform.val[Matrix4.M03] = playerPos.x;
@@ -82,7 +101,10 @@ public class Balls implements Disposable {
 		}
 	}
 	
-	public Balls(World world) {
+	public Balls(World world, BallControlListener listener) {
+		
+		mListener = listener;
+		
 		// load shader
 		mShader = new ShaderProgram(Gdx.files.internal("data/cube.vs"), Gdx.files.internal("data/cube.fs"));
 		if(!mShader.isCompiled()) {
@@ -101,12 +123,16 @@ public class Balls implements Disposable {
 		}
 		mCurrentActor = new Actor(this, mWorld);
 		mActors.add(mCurrentActor);
+		mJointCreatedForCurrentActor = false;
 		return mCurrentActor;
 	}
 	
 	public void update(ILevel screen, float delta) {
 		if(Gdx.input.isButtonPressed(Buttons.LEFT)) {
-			if(mMouseJoint == null && mCurrentActor != null) {
+			if(mMouseJoint == null && mCurrentActor != null && !mJointCreatedForCurrentActor) {
+				if(mListener != null)
+					mListener.isPlayerControllingBall(true);
+				
 				MouseJointDef def = new MouseJointDef();
 				def.maxForce = 1000;
 				def.bodyA = screen.getWorldBody();
@@ -115,18 +141,23 @@ public class Balls implements Disposable {
 				def.target.x = pos.x;
 				def.target.y = pos.y;
 				mMouseJoint = (MouseJoint) mWorld.createJoint(def);
+				mJointCreatedForCurrentActor = true;
 			}
-			mMouseJoint.setTarget(screen.screenToWorld(Gdx.input.getX(), Gdx.input.getY()));
+			if(mMouseJoint != null)
+				mMouseJoint.setTarget(screen.screenToWorld(Gdx.input.getX(), Gdx.input.getY()));
 		} else {
 			if(mMouseJoint != null) {
 				mWorld.destroyJoint(mMouseJoint);
 				mMouseJoint = null;
+				
+				if(mListener != null)
+					mListener.isPlayerControllingBall(false);
 			}
 		}
 		
 		for(int i = 0; i < mActors.size(); ++i) {
 			Actor actor = mActors.get(i);
-			actor.update(delta);
+			actor.update(screen, delta);
 		}
 	}
 	
@@ -153,12 +184,14 @@ public class Balls implements Disposable {
 	}
 	
 	private void destroyActor(Actor actor) {
-		mActors.remove(actor);
+		// TODO: uncomment to remove error
+		//mActors.remove(actor);
 		if(mMouseJoint != null && mMouseJoint.getBodyB() == actor.mBody) {
 			mWorld.destroyJoint(mMouseJoint);
 			mMouseJoint = null;
 		}
-		mWorld.destroyBody(actor.mBody);
+		// TODO: uncomment to remove error
+		//mWorld.destroyBody(actor.mBody);
 		
 		if(mCurrentActor == actor)
 			mCurrentActor = null;

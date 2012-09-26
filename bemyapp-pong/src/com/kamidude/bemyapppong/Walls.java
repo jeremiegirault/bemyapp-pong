@@ -2,6 +2,7 @@ package com.kamidude.bemyapppong;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
@@ -39,6 +40,9 @@ public class Walls implements Disposable {
 		mWallShader.setUniformMatrix("u_proj", level.getCamera().projection);
 		mWallShader.setUniformf("u_halfWallHeight", HALF_WALL_HEIGHT);
 		mWallShader.setUniformf("u_lightDir", level.getLightDir());
+		
+		Gdx.gl.glEnable(GL20.GL_BLEND);
+		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 		
 		mLeftWall.render(mWallShader, level.getCamera());
 		mRightWall.render(mWallShader, level.getCamera());

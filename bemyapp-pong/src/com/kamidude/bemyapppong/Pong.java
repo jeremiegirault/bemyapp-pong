@@ -7,6 +7,8 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -15,6 +17,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
+import com.kamidude.bemyapppong.Balls.BallControlListener;
 
 public final class Pong implements Screen, ILevel {
 
@@ -28,9 +31,12 @@ public final class Pong implements Screen, ILevel {
 	private Balls mMagnets;
 	private Pads mPads;
 	
+	private BitmapFont mFont;
+	private SpriteBatch mFontSprite;
+	
 	private Box2DDebugRenderer mDebugRenderer;
 	
-	private static final float DISTANCE = 40.0f;
+	private static final float DISTANCE = 25.0f;
 	private static final float FAR = 100.0f;
 	private static final float NEAR = 1.0f;
 	
@@ -41,6 +47,9 @@ public final class Pong implements Screen, ILevel {
 	private Vector2 mBottomLeft;
 	private Vector2 mTopRight;
 	private Vector2 mBottomRight;
+	
+	private int mTopPlayerScore = 0;
+	private int mBottomPlayerScore = 0;
 	
 	private Walls mWalls;
 	
@@ -53,7 +62,13 @@ public final class Pong implements Screen, ILevel {
         mWorldBody = mWorld.createBody(worldBodyDef);
 		
         mWalls = new Walls();
-        mMagnets = new Balls(mWorld);
+        mMagnets = new Balls(mWorld, new BallControlListener() {
+			@Override
+			public void isPlayerControllingBall(boolean controlling) {
+				if(mPads != null)
+					mPads.setControlAllowed(!controlling);
+			}
+		});
         mMagnets.newActor();
 		
         mDebugRenderer = new Box2DDebugRenderer();
@@ -62,6 +77,9 @@ public final class Pong implements Screen, ILevel {
         mNormalMatrix = new Matrix4();
         mLightDir = new Vector3();
         mInvView = new Matrix4();
+        
+        mFontSprite = new SpriteBatch();
+        mFont = new BitmapFont();
 	}
 	
 	//
@@ -87,10 +105,21 @@ public final class Pong implements Screen, ILevel {
 		Balls.Actor currentMagnet = mMagnets.getCurrentActor();
 		if(currentMagnet != null) {
 			Vector2 playerPos = currentMagnet.getBody().getPosition();
-			if(playerPos.y < mBottomLeft.y || playerPos.y > mTopLeft.y) {
+			boolean destroyMagnet = false;
+			if(playerPos.y < mBottomLeft.y) {
+				destroyMagnet = true;
+				mTopPlayerScore++;
+			} else if(playerPos.y > mTopLeft.y) {
+				destroyMagnet = true;
+				mBottomPlayerScore++;
+			}
+			
+			if(destroyMagnet) {
 				currentMagnet.destroy();
 				mMagnets.newActor();
 			}
+			
+			
 		}
 		mPads.update(this, delta);
 		
@@ -98,6 +127,11 @@ public final class Pong implements Screen, ILevel {
 		mWalls.render(this);
 		mMagnets.render(this);
 		mPads.render(this);
+		
+		mFontSprite.begin();
+		mFont.draw(mFontSprite, String.valueOf(mTopPlayerScore), 25, Gdx.graphics.getHeight()-5);
+		mFont.draw(mFontSprite, String.valueOf(mBottomPlayerScore), 25, 20);
+		mFontSprite.end();
 		
 		mDebugRenderer.render(mWorld, mCamera.combined);
 	}
@@ -134,8 +168,6 @@ public final class Pong implements Screen, ILevel {
 		Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		
 		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
-		Gdx.gl.glEnable(GL20.GL_BLEND);
-		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	@Override

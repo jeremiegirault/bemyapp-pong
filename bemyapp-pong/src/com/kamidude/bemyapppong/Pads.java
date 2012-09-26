@@ -25,6 +25,8 @@ public class Pads implements Disposable {
 	private Body mPadBottom;
 	private Matrix4 mPadBottomTransform;
 	
+	private boolean mControlAllowed = true;
+	
 	public Pads(World world, float topLane, float bottomLane) {
 		mWorld = world;
 		
@@ -49,22 +51,46 @@ public class Pads implements Disposable {
 	
 	private Body makePadBody(float x, float y) {
 		BodyDef padBodyDef = new BodyDef();
-		padBodyDef.type = BodyType.KinematicBody;
+		padBodyDef.type = BodyType.StaticBody;
 		padBodyDef.position.set(x, y);
         
 		Body rv = mWorld.createBody(padBodyDef);
 		PolygonShape shape = new PolygonShape();
-		shape.setAsBox(4.5f, 0.5f);
+		shape.setAsBox(2.0f, 0.5f);
 		rv.createFixture(shape, 0.0f);
 		shape.dispose();
 		return rv;
 	}
 	
+	private void movePad(ILevel level, int x, int y) {
+		if(y < Gdx.graphics.getHeight() / 2) {
+			// move top pad
+			Vector2 topPadPos = level.screenToWorld(x, y);
+			
+			mPadTop.setTransform(topPadPos.x, mPadTop.getPosition().y, 0);
+		} else {
+			// move bottom pad
+			Vector2 bottomPadPos = level.screenToWorld(x, y);
+			
+			mPadBottom.setTransform(bottomPadPos.x, mPadBottom.getPosition().y, 0);
+		} 
+	}
+	
 	public void update(ILevel level, float delta) {
+		
+		if(mControlAllowed) {
+			if(Gdx.input.isTouched(0)) {
+				movePad(level, Gdx.input.getX(0), Gdx.input.getY(0));
+			}
+			
+			if(Gdx.input.isTouched(1)) {
+				movePad(level, Gdx.input.getX(1), Gdx.input.getY(1));
+			}
+		}
+		
 		Vector2 topPos = mPadTop.getPosition();
 		mPadTopTransform.val[Matrix4.M03] = topPos.x;
 		mPadTopTransform.val[Matrix4.M13] = topPos.y;
-		//mPadBottomTransform.rotate(1, 1, 1, 0.2f);
 		Vector2 bottomPos = mPadBottom.getPosition();
 		mPadBottomTransform.val[Matrix4.M03] = bottomPos.x;
 		mPadBottomTransform.val[Matrix4.M13] = bottomPos.y;
@@ -87,6 +113,10 @@ public class Pads implements Disposable {
 		mMesh.render(mShader, GL20.GL_TRIANGLES);
 		
 		mShader.end();
+	}
+	
+	public void setControlAllowed(boolean allowed) {
+		mControlAllowed = allowed;
 	}
 	
 	//
